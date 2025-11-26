@@ -1,0 +1,1 @@
+{"booster": "gbtree", "eta": 0.3, "objective": "reg:squarederror", "version": "v1.2"}

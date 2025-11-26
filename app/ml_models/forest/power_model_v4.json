@@ -1,0 +1,1 @@
+{"n_estimators": 100, "max_depth": 10, "feature_importances": [0.1, 0.4, 0.5], "version": "v4.0"}

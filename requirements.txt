@@ -1,0 +1,143 @@
+asttokens==2.4.1
+attrs==24.2.0
+babel==2.16.0
+backcall==0.2.0
+Bottleneck==1.4.2
+certifi==2024.8.30
+charset-normalizer==3.4.0
+clickhouse-driver==0.2.9
+comm==0.2.2
+contourpy==1.3.0
+cycler==0.12.1
+#data-wrapper==2.2.2
+debugpy==1.8.8
+decorator==5.1.1
+Deprecated==1.2.14
+docopt==0.6.2
+docxcompose==1.4.0
+docxtpl==0.18.0
+et_xmlfile==2.0.0
+executing==2.1.0
+fastjsonschema==2.20.0
+fonttools==4.54.1
+idna==3.10
+openai
+ipykernel==6.29.5
+ipython==8.29.0
+jedi==0.19.2
+Jinja2==3.1.4
+joblib==1.4.2
+jsonschema==4.23.0
+jsonschema-specifications==2024.10.1
+jupyter_client==8.6.3
+jupyter_core==5.7.2
+kiwisolver==1.4.7
+lxml==5.3.0
+MarkupSafe==3.0.2
+matplotlib==3.9.2
+matplotlib-inline==0.1.7
+nbformat==5.10.4
+nest-asyncio==1.6.0
+num2words==0.5.13
+numexpr==2.10.1
+numpy==2.1.3
+openpyxl==3.1.5
+packaging==24.2
+pandas==2.2.3
+parso==0.8.4
+pexpect==4.9.0
+pickleshare==0.7.5
+pillow==11.0.0
+platformdirs==4.3.6
+plotly==5.24.1
+prettytable==3.12.0
+prompt_toolkit==3.0.48
+psutil==6.1.0
+ptyprocess==0.7.0
+pure_eval==0.2.3
+Pygments==2.18.0
+pyparsing==3.2.0
+python-dateutil==2.9.0.post0
+python-docx==1.1.2
+python-dotenv==1.0.1
+pytz==2024.2
+pyzmq==26.2.0
+referencing==0.35.1
+requests==2.32.3
+rpds-py==0.21.0
+scikit-learn==1.5.2
+scipy==1.14.1
+statsmodels==0.14.4
+seaborn==0.13.2
+setuptools==75.3.0
+six==1.16.0
+stack-data==0.6.3
+tenacity==9.0.0
+threadpoolctl==3.5.0
+tornado==6.4.1
+tqdm==4.67.0
+traitlets==5.14.3
+typing_extensions==4.12.2
+tzdata==2024.2
+tzlocal==5.2
+urllib3==2.2.3
+wcwidth==0.2.13
+wrapt==1.16.0
+
+# === Векторные базы данных ===
+pymilvus>=2.3.0          # Milvus клиент
+qdrant-client>=1.7.0     # Qdrant клиент  
+chromadb>=0.4.0          # ChromaDB для тестов
+
+# === Энкодеры и модели ===
+torch>=2.0.0             # PyTorch
+transformers>=4.35.0     # Hugging Face Transformers
+sentence-transformers>=2.2.0  # Для текстовых эмбеддингов
+pytorch-forecasting>=1.0.0    # Time series models
+
+# === Временные ряды ===
+tslearn>=0.6.0           # Time series ML
+pyts>=0.12.0             # Time series transformations
+tsfresh>=0.20.0          # Feature extraction
+sktime>=0.24.0           # Time series framework
+
+# === Обработка данных ===
+pandas>=2.0.0            # DataFrame operations
+numpy>=1.24.0            # Numerical computing
+scipy>=1.10.0            # Scientific computing
+scikit-learn>=1.3.0      # ML utilities
+
+# === Базы данных ===
+clickhouse-driver>=0.2.0  # ClickHouse для сырых данных
+sqlalchemy>=2.0.0        # ORM
+redis>=4.5.0             # Кэширование
+
+# === Визуализация ===
+matplotlib>=3.7.0        # Plotting
+seaborn>=0.12.0          # Statistical visualization
+plotly>=5.15.0           # Interactive plots
+bokeh>=3.2.0             # Web plots
+
+# === Разработка ===
+jupyter>=1.0.0           # Notebooks
+ipywidgets>=8.0.0        # Jupyter widgets
+tqdm>=4.65.0             # Progress bars
+rich>=13.0.0             # Rich console output
+
+# === Тестирование ===
+pytest>=7.4.0           # Testing framework
+pytest-asyncio>=0.21.0  # Async testing
+pytest-benchmark>=4.0.0 # Performance testing
+
+# === Утилиты ===
+python-dotenv>=1.0.0    # Environment variables
+pydantic>=2.0.0         # Data validation
+typer>=0.9.0            # CLI framework
+loguru>=0.7.0           # Enhanced logging
+
+# === Метрики и оценка ===
+nltk>=3.8.0             # NLP metrics
+rouge-score>=0.1.2      # ROUGE metrics
+bert-score>=0.3.13      # BERT-based metrics
+fastapi>=0.104.0
+uvicorn>=0.24.0

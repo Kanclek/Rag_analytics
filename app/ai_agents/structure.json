@@ -1,0 +1,290 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "IoT Analytics IR v1",
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["version", "intent", "scope", "time", "output"],
+    "properties": {
+      "version": { "const": "1.0" },
+      "intent": {
+        "type": "string",
+        "enum": [
+          "stats",
+          "compare",
+          "relationship",
+          "diagnose",
+          "forecast",
+          "uptime",
+          "peaks",
+          "anomaly"
+        ]
+      },
+      "scope": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sensors"],
+        "properties": {
+          "objects": { "type": "array", "items": { "type": "string" } },
+          "zones":   { "type": "array", "items": { "type": "string" } },
+          "sensors": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "$ref": "#/$defs/sensorRef" }
+          },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "include_children": { "type": "boolean", "default": false }
+        }
+      },
+      "time": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["start", "end", "tz"],
+        "properties": {
+          "start": { "type": "string", "format": "date-time" },
+          "end":   { "type": "string", "format": "date-time" },
+          "tz":    { "type": "string", "default": "Europe/Amsterdam" },
+          "grain": {
+            "type": "string",
+            "enum": ["raw","minute","5min","15min","hour","day","week","month"],
+            "default": "hour"
+          },
+          "resample": { "type": "boolean", "default": true },
+          "align": { "type": "string", "enum": ["start","end","center"], "default": "end" },
+          "fill":  { "type": "string", "enum": ["none","ffill","bfill","zero","linear"], "default": "ffill" },
+          "window": { "type": "string", "pattern": "^\\d+[smhdw]$" }
+        }
+      },
+      "filters": {
+        "type": "array",
+        "items": { "$ref": "#/$defs/filter" }
+      },
+      "metrics": {
+        "type": "array",
+        "minItems": 1,
+        "items": { "$ref": "#/$defs/metricSpec" }
+      },
+      "relationships": { "$ref": "#/$defs/relationshipSpec" },
+      "diagnose_spec": { "$ref": "#/$defs/diagnoseSpec" },
+      "forecast_spec": { "$ref": "#/$defs/forecastSpec" },
+      "uptime_spec":   { "$ref": "#/$defs/uptimeSpec" },
+      "peaks_spec":    { "$ref": "#/$defs/peaksSpec" },
+      "anomaly_spec":  { "$ref": "#/$defs/anomalySpec" },
+      "output": { "$ref": "#/$defs/outputSpec" },
+      "limits": { "$ref": "#/$defs/limits" }
+    },
+    "oneOf": [
+      { "properties": { "intent": { "const": "stats" } },        "required": ["metrics"] },
+      { "properties": { "intent": { "const": "compare" } },      "required": ["metrics"] },
+      { "properties": { "intent": { "const": "relationship" } }, "required": ["relationships"] },
+      { "properties": { "intent": { "const": "diagnose" } },     "required": ["diagnose_spec"] },
+      { "properties": { "intent": { "const": "forecast" } },     "required": ["forecast_spec"] },
+      { "properties": { "intent": { "const": "uptime" } },       "required": ["uptime_spec"] },
+      { "properties": { "intent": { "const": "peaks" } },        "required": ["peaks_spec"] },
+      { "properties": { "intent": { "const": "anomaly" } },      "required": ["anomaly_spec"] }
+    ],
+    "$defs": {
+      "sensorRef": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id"],
+        "properties": {
+          "id": { "type": "string" },
+          "metric": { "type": "string" },
+          "unit": { "type": "string" }
+        }
+      },
+      "target": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sensor_id", "field"],
+        "properties": {
+          "sensor_id": { "type": "string" },
+          "field": {
+            "type": "string",
+            "enum": [
+              "value",
+              "energy_kwh",
+              "power_kw",
+              "on_off",
+              "temperature",
+              "humidity",
+              "state"
+            ]
+          }
+        }
+      },
+      "filter": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["field", "op", "value"],
+        "properties": {
+          "field": { "type": "string" },
+          "op": {
+            "type": "string",
+            "enum": ["=","!=","in","not_in",">",">=","<","<=","between","contains","match"]
+          },
+          "value": {}
+        }
+      },
+      "metricSpec": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["target", "agg"],
+        "properties": {
+          "target": { "$ref": "#/$defs/target" },
+          "agg": {
+            "type": "string",
+            "enum": ["sum","avg","min","max","count","p50","p90","p95","p99","quantile","std","var"]
+          },
+          "quantile": { "type": "number", "minimum": 0, "maximum": 1 },
+          "post": {
+            "type": ["string","null"],
+            "enum": ["rate","diff","pct_change","normalize","zscore", null],
+            "default": null
+          },
+          "by": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "relationshipSpec": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["targets"],
+        "properties": {
+          "targets": {
+            "type": "array",
+            "minItems": 2,
+            "items": { "$ref": "#/$defs/target" }
+          },
+          "method": {
+            "type": "string",
+            "enum": ["correlation","lagged_correlation","granger","mutual_information"],
+            "default": "correlation"
+          },
+          "lag": {
+            "type": "string",
+            "pattern": "^-?\\d+[smhdw]$|^\\d+\\.\\.\\d+[smhdw]$",
+            "description": "один лаг (e.g. -1h) или диапазон (e.g. 0..7d)"
+          },
+          "seasonality_aware": { "type": "boolean", "default": true },
+          "partial_out": {
+            "type": "array",
+            "items": { "$ref": "#/$defs/target" }
+          }
+        }
+      },
+      "diagnoseSpec": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["target", "drivers"],
+        "properties": {
+          "target":  { "$ref": "#/$defs/target" },
+          "drivers": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/target" } },
+          "method":  { "type": "string", "enum": ["regression","shap_linear","shap_tree"], "default": "regression" },
+          "granularity": { "type": "string", "enum": ["overall","per_bucket"], "default": "overall" }
+        }
+      },
+      "forecastSpec": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["target", "horizon"],
+        "properties": {
+          "target": { "$ref": "#/$defs/target" },
+          "horizon": { "type": "string", "pattern": "^\\d+[smhdw]$" },
+          "objective": {
+            "type": "string",
+            "enum": ["value_at_horizon","time_to_threshold","probability_of_breach"],
+            "default": "value_at_horizon"
+          },
+          "threshold": { "type": ["number","null"], "default": null },
+          "service_level": { "type": "number", "minimum": 0.5, "maximum": 0.99, "default": 0.9 },
+          "exogenous": { "type": "array", "items": { "$ref": "#/$defs/target" } },
+          "allow_causal": { "type": "boolean", "default": false },
+          "model_type": {
+             "type": "string",
+             "enum": ["auto", "linear", "forest", "boosting"],
+             "default": "auto",
+             "description": "Тип модели ML: linear(климат), forest(ЩС), boosting(HVAC)"
+          }
+        }
+      },
+      "uptimeSpec": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["target"],
+        "properties": {
+          "target": { "$ref": "#/$defs/target" },
+          "state_mapping": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "on_values":  { "type": "array", "items": {} },
+              "off_values": { "type": "array", "items": {} }
+            }
+          },
+          "metrics": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["uptime_ratio","downtime_ratio","mean_on_duration","mean_off_duration","switch_count","mtbf","mttr","availability"]
+            }
+          },
+          "peak_hours":  { "type": "boolean", "default": false },
+          "peak_method": { "type": "string", "enum": ["count_on","avg_power","energy_share"], "default": "count_on" }
+        }
+      },
+      "peaksSpec": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["target"],
+        "properties": {
+          "target": { "$ref": "#/$defs/target" },
+          "method": { "type": "string", "enum": ["top_n","threshold","prominence"], "default": "top_n" },
+          "top_n": { "type": "integer", "minimum": 1, "maximum": 50, "default": 5 },
+          "threshold":  { "type": ["number","null"], "default": null },
+          "prominence": { "type": ["number","null"], "default": null },
+          "window":     { "type": ["string","null"], "pattern": "^\\d+[smhd]$", "default": null }
+        }
+      },
+      "anomalySpec": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "targets": { "type": "array", "items": { "$ref": "#/$defs/target" } },
+          "method":  { "type": "string", "enum": ["zscore","iqr","stl_esd","prophet","isolation_forest"], "default": "stl_esd" },
+          "sensitivity": { "type": "string", "enum": ["low","medium","high"], "default": "medium" },
+          "min_support": { "type": "integer", "minimum": 3, "default": 3 }
+        }
+      },
+      "outputSpec": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["lang", "format"],
+        "properties": {
+          "lang":   { "type": "string", "enum": ["ru","en"], "default": "ru" },
+          "format": { "type": "string", "enum": ["table","chart","table+notes","findings"], "default": "table" },
+          "chart": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "type":   { "type": "string", "enum": ["line","bar","area","box","heatmap"] },
+              "stacked": { "type": "boolean", "default": false },
+              "y_unit": { "type": "string" }
+            }
+          },
+          "include_sources": { "type": "boolean", "default": false },
+          "max_tokens":      { "type": "integer", "minimum": 256, "maximum": 8000, "default": 1200 }
+        }
+      },
+      "limits": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "max_rows":   { "type": "integer", "default": 10000 },
+          "max_series": { "type": "integer", "default": 10 },
+          "sampling":   { "type": "string", "enum": ["none","uniform","per_bucket"], "default": "per_bucket" },
+          "downsample": { "type": ["string","null"], "pattern": "^\\d+[smhd]$", "default": null }
+        }
+      }
+    }
+  }
+  

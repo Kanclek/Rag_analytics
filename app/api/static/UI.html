@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Agent Interface</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1em;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            color: #555;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 150px;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .download-btn {
+            background: #4caf50;
+            color: white;
+            display: none;
+        }
+
+        .download-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .download-btn.visible {
+            display: block;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #667eea;
+            font-weight: 500;
+            font-size: 16px;
+        }
+
+        .status-message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .status-message.visible {
+            display: block;
+        }
+
+        .status-message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .result-info {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 14px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🤖 AI Agent Interface</h1>
+        <p class="subtitle">Отправьте запрос для обработки AI-агентами</p>
+
+        <div class="input-group">
+            <label for="queryInput">Ваш запрос:</label>
+            <textarea 
+                id="queryInput" 
+                placeholder="Введите ваш запрос здесь..."
+                autocomplete="off"
+            ></textarea>
+        </div>
+
+        <div class="button-group">
+            <button class="submit-btn" id="submitBtn" onclick="submitQuery()">
+                Отправить запрос
+            </button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p class="loading-text">Обработка запроса...</p>
+        </div>
+
+        <div class="status-message" id="statusMessage"></div>
+
+        <button class="download-btn" id="downloadBtn" onclick="downloadResult()">
+            📥 Скачать результат (.md)
+        </button>
+    </div>
+
+    <script>
+        // Переменная для хранения результата
+        let resultData = null;
+
+        // Функция отправки запроса
+        async function submitQuery() {
+            // Получаем текст запроса
+            const queryInput = document.getElementById('queryInput');
+            const query = queryInput.value.trim();
+
+            // Проверяем, что запрос не пустой
+            if (!query) {
+                showStatus('Пожалуйста, введите запрос', 'error');
+                return;
+            }
+
+            // Показываем загрузку
+            setLoading(true);
+            hideStatus();
+            hideDownloadButton();
+
+            try {
+                // Отправляем запрос на сервер
+                const response = await fetch('/api/process', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query: query })
+                });
+
+                // Проверяем успешность ответа
+                if (!response.ok) {
+                    throw new Error('Ошибка при обработке запроса');
+                }
+
+                // Получаем результат
+                const data = await response.json();
+                resultData = data;
+
+                // Показываем сообщение об успехе
+                showStatus('✓ Запрос успешно обработан!', 'success');
+                showDownloadButton();
+
+            } catch (error) {
+                // Показываем ошибку
+                showStatus('⚠ Ошибка: ' + error.message, 'error');
+                console.error('Error:', error);
+            } finally {
+                // Скрываем загрузку
+                setLoading(false);
+            }
+        }
+
+        // Функция скачивания результата
+        function downloadResult() {
+            if (!resultData) {
+                showStatus('Нет данных для скачивания', 'error');
+                return;
+            }
+
+            // Создаем содержимое .md файла
+            const mdContent = resultData.content || 'Результат обработки запроса';
+            
+            // Создаем Blob с текстом
+            const blob = new Blob([mdContent], { type: 'text/markdown' });
+            
+            // Создаем ссылку для скачивания
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'result_' + Date.now() + '.md';
+            
+            // Кликаем по ссылке
+            document.body.appendChild(link);
+            link.click();
+            
+            // Удаляем ссылку
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+            showStatus('✓ Файл скачан!', 'success');
+        }
+
+        // Функция показа/скрытия загрузки
+        function setLoading(isLoading) {
+            const loadingEl = document.getElementById('loading');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            if (isLoading) {
+                loadingEl.classList.add('active');
+                submitBtn.disabled = true;
+            } else {
+                loadingEl.classList.remove('active');
+                submitBtn.disabled = false;
+            }
+        }
+
+        // Функция показа статусного сообщения
+        function showStatus(message, type) {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.textContent = message;
+            statusEl.className = 'status-message visible ' + type;
+        }
+
+        // Функция скрытия статусного сообщения
+        function hideStatus() {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.classList.remove('visible');
+        }
+
+        // Функция показа кнопки скачивания
+        function showDownloadButton() {
+            const downloadBtn = document.getElementById('downloadBtn');
+            downloadBtn.classList.add('visible');
+        }
+
+        // Функция скрытия кнопки скачивания
+        function hideDownloadButton() {
+            const downloadBtn = document.getElementById('downloadBtn');
+            downloadBtn.classList.remove('visible');
+        }
+
+        // Обработка нажатия Enter (с Ctrl для отправки)
+        document.getElementById('queryInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                submitQuery();
+            }
+        });
+    </script>
+</body>
+</html>
+

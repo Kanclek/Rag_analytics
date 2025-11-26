@@ -1,0 +1,15 @@
+/data
+/log
+/app/__pycache__
+/config
+/tests_and_old_code
+images
+
+.env
+/CA
+*.crt
+
+Dockerfile
+*.yml
+.venv
+venv
